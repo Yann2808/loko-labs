@@ -36,7 +36,7 @@ Signature : **"Solide comme un Loko"**
 | Blog | Hashnode | lokolabs.hashnode.dev |
 | Landing page | HTML statique | index.html — HTML/CSS/JS en un seul fichier |
 | Hébergement | Cloudflare Pages | loko-labs.pages.dev |
-| Repo | GitHub | github.com/Yann2808/loko-labs |
+| Repo | GitHub | github.com/Lokolabs/loko-labs |
 | Données articles | API GraphQL Hashnode | Fetch côté client, pas de redéploiement |
 | Branching | Git flow simple | main = prod, branches pour chaque feature |
 
@@ -136,4 +136,4 @@ print(f"Temps : {elapsed:.3f}s | Mémoire : {mem_mb:.1f} MB | CPU : {cpu_pct}%")
 
 ---
 
-*Loko Labs — lokolabs.hashnode.dev | github.com/Yann2808/loko-labs*
+*Loko Labs — lokolabs.hashnode.dev | github.com/Lokolabs/loko-labs*
