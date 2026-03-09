@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #111111;
+      font-family: 'Syne', sans-serif;
+      padding: 28px 32px;
+      border-left: 4px solid #E8511A;
+    }
+    .eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #E8511A;
+      margin-bottom: 10px;
+    }
+    .title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #F0EDE6;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .desc {
+      font-size: 0.82rem;
+      color: #666666;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+    .form-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    input[type="email"] {
+      flex: 1;
+      min-width: 200px;
+      background: #0A0A0A;
+      border: 1px solid #1E1E1E;
+      color: #F0EDE6;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="email"]:focus { border-color: #E8511A; }
+    input[type="email"]::placeholder { color: #444444; }
+    button {
+      background: #E8511A;
+      color: #0A0A0A;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 11px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover { background: #f0622a; }
+    button:disabled { background: #444; cursor: not-allowed; }
+    .msg {
+      margin-top: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+    }
+    .msg.success { color: #2ECC71; }
+    .msg.error   { color: #E74C3C; }
+    .msg.note    { color: #444444; }
+  </style>
+</head>
+<body>
+  <div class="eyebrow">// Newsletter · Loko Labs</div>
+  <div class="title">Reçois les prochains crash tests</div>
+  <div class="desc">Un verdict honnête toutes les 2-3 semaines. Pas de spam.</div>
+  <div class="form-row">
+    <input type="email" id="email" placeholder="ton@email.com" />
+    <button id="btn" onclick="subscribe()">S'abonner</button>
+  </div>
+  <div class="msg note" id="msg">// Solide comme un Loko.</div>
+
+  <script>
+    const PUBLICATION_ID = '69a43dfea7428b958dbf10fe';
+
+    async function subscribe() {
+      const email = document.getElementById('email').value.trim();
+      const btn   = document.getElementById('btn');
+      const msg   = document.getElementById('msg');
+
+      if (!email || !email.includes('@')) {
+        msg.textContent = '// Email invalide.';
+        msg.className = 'msg error';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+      msg.textContent = '';
+      msg.className = 'msg';
+
+      try {
+        const res = await fetch('https://gql.hashnode.com/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `
+              mutation subscribeToNewsletter($input: SubscribeToNewsletterInput!) {
+                subscribeToNewsletter(input: $input) {
+                  status
+                }
+              }
+            `,
+            variables: {
+              input: {
+                publicationId: PUBLICATION_ID,
+                email: email
+              }
+            }
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.errors) throw new Error(data.errors[0].message);
+
+        const status = data?.data?.subscribeToNewsletter?.status;
+
+        if (status === 'PENDING') {
+          msg.textContent = '// Vérifie ta boîte mail pour confirmer.';
+          msg.className = 'msg success';
+          document.getElementById('email').value = '';
+        } else if (status === 'CONFIRMED') {
+          msg.textContent = '// Tu es abonné(e). Bienvenue 🚀';
+          msg.className = 'msg success';
+        } else {
+          msg.textContent = '// Abonnement enregistré.';
+          msg.className = 'msg success';
+        }
+
+      } catch (err) {
+        msg.textContent = '// Erreur. Réessaie dans un instant.';
+        msg.className = 'msg error';
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "S'abonner";
+      }
+    }
+
+    // Enter key support
+    document.getElementById('email').addEventListener('keydown', e => {
+      if (e.key === 'Enter') subscribe();
+    });
+  </script>
+</body>
+</html>
