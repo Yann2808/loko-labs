@@ -738,18 +738,18 @@
       </div>
     </section>
 
-    <!-- NEWSLETTER -->
+<!-- SECTION NEWSLETTER - remplace l'existante -->
     <section id="newsletter">
       <div class="nl-left reveal">
         <h2>La veille<br /><span>qui compte.</span></h2>
         <p>Nouveaux crash-tests, guides DataOps et analyses d'outils directement dans ta boîte mail. Zéro bruit, que du signal.</p>
       </div>
       <div class="nl-form reveal">
-        <div class="nl-input-row">
-          <input type="email" placeholder="ton@email.com" autocomplete="off" />
-          <button class="nl-btn">Subscribe</button>
+        <div class="nl-input-row" id="nl-input-row">
+          <input type="email" id="nl-email" placeholder="ton@email.com" autocomplete="off" />
+          <button class="nl-btn" id="nl-btn" onclick="subscribeNewsletter()">Subscribe</button>
         </div>
-        <p class="nl-note">// Aucun spam. Désabonnement en 1 clic. Fréquence : ~2x/mois.</p>
+        <p class="nl-note" id="nl-msg">// Aucun spam. Désabonnement en 1 clic. Fréquence : ~2x/mois.</p>
       </div>
     </section>
   </main>
@@ -912,5 +912,79 @@
     // Lancer le fetch au chargement
     fetchPosts();
   </script>
+
+<!-- SCRIPT NEWSLETTER -->
+  <script>
+    const NL_PUBLICATION_ID = '69a43dfea7428b958dbf10fe';
+
+    async function subscribeNewsletter() {
+      const email = document.getElementById('nl-email').value.trim();
+      const btn   = document.getElementById('nl-btn');
+      const msg   = document.getElementById('nl-msg');
+      const row   = document.getElementById('nl-input-row');
+
+      if (!email || !email.includes('@')) {
+        msg.style.color = '#E74C3C';
+        msg.textContent = '// Email invalide.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '...';
+      msg.style.color = '#6B6B6B';
+      msg.textContent = '// Connexion en cours...';
+
+      try {
+        const res = await fetch('https://gql.hashnode.com/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `
+              mutation subscribeToNewsletter($input: SubscribeToNewsletterInput!) {
+                subscribeToNewsletter(input: $input) {
+                  status
+                }
+              }
+            `,
+            variables: {
+              input: {
+                publicationId: NL_PUBLICATION_ID,
+                email: email
+              }
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (data.errors) throw new Error(data.errors[0].message);
+
+        const status = data?.data?.subscribeToNewsletter?.status;
+
+        if (status === 'PENDING' || status === 'CONFIRMED') {
+          row.style.borderColor = '#2ECC71';
+          msg.style.color = '#2ECC71';
+          msg.textContent = '// Vérifie ta boîte mail pour confirmer. Bienvenue 🚀';
+          document.getElementById('nl-email').value = '';
+        } else {
+          msg.style.color = '#2ECC71';
+          msg.textContent = '// Abonnement enregistré.';
+        }
+
+      } catch (err) {
+        msg.style.color = '#E74C3C';
+        msg.textContent = '// Erreur réseau. Réessaie dans un instant.';
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
+      }
+    }
+
+    // Enter key
+    document.getElementById('nl-email')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') subscribeNewsletter();
+    });
+  </script>
+
 </body>
 </html>
